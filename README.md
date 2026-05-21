@@ -49,10 +49,10 @@ O **Vôlei Manager** resolve isso com algoritmos inteligentes de balanceamento, 
 ## 📁 Estrutura do projeto
 
 volei-manager/
-├── index.html → Estrutura e modais
-├── style.css → Estilização completa (design system próprio)
-├── script.js → Toda a lógica de negócio e interação
-└── README.md → Este arquivo
+├── index.html ← Estrutura da interface e modais
+├── style.css ← Design system completo (variações, temas, responsivo)
+├── script.js ← Lógica de negócio, rodízios e persistência
+├── README.md ← Documentação do projeto
 
 
 ## 🖥️ Como executar

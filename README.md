@@ -55,7 +55,7 @@ volei-manager/
 ├── script.js    ← Lógica de negócio, rodízios e persistência
 ├── README.md    ← Documentação do projeto
 └── LICENSE      ← Licença MIT
-
+```
 
 ## 🖥️ Como executar
 

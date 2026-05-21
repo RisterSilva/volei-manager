@@ -48,11 +48,13 @@ O **Vôlei Manager** resolve isso com algoritmos inteligentes de balanceamento, 
 
 ## 📁 Estrutura do projeto
 
+```text
 volei-manager/
-├── index.html ← Estrutura da interface e modais
-├── style.css ← Design system completo (variações, temas, responsivo)
-├── script.js ← Lógica de negócio, rodízios e persistência
-├── README.md ← Documentação do projeto
+├── index.html   ← Estrutura da interface e modais
+├── style.css    ← Design system completo (variações, temas, responsivo)
+├── script.js    ← Lógica de negócio, rodízios e persistência
+├── README.md    ← Documentação do projeto
+└── LICENSE      ← Licença MIT
 
 
 ## 🖥️ Como executar

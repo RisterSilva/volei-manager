@@ -59,7 +59,7 @@ volei-manager/
 ## 🖥️ Como executar
 
 1. Faça o download ou clone este repositório.
-2. Abra a pasta `Gerenciador_Peladas`.
+2. Abra a pasta `volei-manager`.
 3. Dê um duplo clique no arquivo `index.html`.
 4. O sistema será carregado no seu navegador padrão – **não é necessário servidor local**.
 

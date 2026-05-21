@@ -54,6 +54,7 @@ volei-manager/
 ├── style.css    ← Design system completo (variações, temas, responsivo)
 ├── script.js    ← Lógica de negócio, rodízios e persistência
 ├── README.md    ← Documentação do projeto
+└── LICENSE      ← Licença MIT
 ```
 
 ## 🖥️ Como executar
@@ -86,7 +87,7 @@ Antes de contribuir com código, por favor:
 - Teste localmente abrindo o `index.html` diretamente.
 
 ## 📄 Licença
-
+Este projeto é distribuído sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.  
 Em resumo: use como quiser, apenas mantenha os créditos.
 
 ---

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Vôlei Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-ball">🏐</div>
+      <span>Vôlei Manager</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="topbar-actions">
+      <button class="topbar-btn" id="btn-test" title="Gerar jogadores de teste">🧪</button>
+      <button class="topbar-btn" id="btn-cfg" title="Configurações">⚙️</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('elenco')">Elenco</button>
+    <button class="tab" onclick="switchTab('presenca')">Presença</button>
+    <button class="tab" onclick="switchTab('times')">Times</button>
+    <button class="tab" onclick="switchTab('placar')">Placar</button>
+    <button class="tab" onclick="switchTab('rodizio')">Rodízio</button>
+    <button class="tab" onclick="switchTab('estatisticas')">Estatísticas</button>
+    <button class="tab" onclick="switchTab('torneio')">Torneio</button>
+    <button class="tab" onclick="switchTab('importar')">Importar</button>
+  </div>
+
+  <!-- ELENCO -->
+  <div id="panel-elenco" class="panel active">
+    <div class="metrics" id="metrics-row" style="display:none">
+      <div class="metric"><div class="metric-label">Total</div><div class="metric-value" id="total-count">0</div></div>
+      <div class="metric"><div class="metric-label">Presentes</div><div class="metric-value" id="present-count">0</div></div>
+      <div class="metric"><div class="metric-label">Masc</div><div class="metric-value" id="male-count">0</div></div>
+      <div class="metric"><div class="metric-label">Fem</div><div class="metric-value" id="female-count">0</div></div>
+    </div>
+    <div class="card collapsible" id="card-add">
+      <div class="card-header">
+        <span class="card-title">➕ Cadastrar jogador</span>
+        <button class="collapse-btn" onclick="toggleCollapse('card-add')">▲</button>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="field"><label>Nome</label><input id="player-name" placeholder="Ex: João Silva"></div>
+          <div class="field"><label>Nível (1–5)</label><input id="player-level" type="number" min="1" max="5" placeholder="1–5"></div>
+          <div class="field"><label>Sexo</label><select id="player-gender"><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
+          <button class="btn btn-primary" onclick="addPlayer()">Cadastrar</button>
+        </div>
+        <div id="elenco-alert"></div>
+      </div>
+    </div>
+    <div class="card collapsible" id="card-list">
+      <div class="card-header">
+        <span class="card-title">📋 Elenco</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="collapse-btn" onclick="toggleCollapse('card-list')">▲</button>
+          <button class="btn btn-red btn-sm" onclick="clearAllPlayers()">Limpar tudo</button>
+        </div>
+      </div>
+      <div class="card-body"><div id="players-list"></div></div>
+    </div>
+  </div>
+
+  <!-- PRESENÇA -->
+  <div id="panel-presenca" class="panel">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">✅ Controle de Presença</span>
+      </div>
+      <div class="card-body">
+        <div class="row" style="margin-bottom:16px; justify-content:space-between; flex-wrap:wrap;">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <span class="badge b-ok">Total: <span id="pres-total">0</span></span>
+            <span class="badge b-m">Presentes: <span id="pres-present-count">0</span></span>
+          </div>
+          <div class="filter-bar" style="margin-bottom:0">
+            <button class="filter-chip active" onclick="setPresenceFilter('all')">Todos</button>
+            <button class="filter-chip" onclick="setPresenceFilter('present')">Presentes</button>
+            <button class="filter-chip" onclick="setPresenceFilter('absent')">Ausentes</button>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" onclick="setAllPresence(true)">Todos presentes</button>
+            <button class="btn btn-sm" onclick="setAllPresence(false)">Todos ausentes</button>
+          </div>
+        </div>
+        <div id="presence-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMES -->
+  <div id="panel-times" class="panel">
+    <div class="card collapsible" id="card-sort">
+      <div class="card-header">
+        <span class="card-title">⚡ Sorteio balanceado</span>
+        <button class="collapse-btn" onclick="toggleCollapse('card-sort')">▲</button>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="field"><label>Jogadores por time</label>
+            <select id="team-size">
+              <option value="2">2 (Dupla)</option>
+              <option value="3">3 (Trio)</option>
+              <option value="4" selected>4 (Quarteto)</option>
+              <option value="5">5 (Quinteto)</option>
+              <option value="6">6 (Sexteto)</option>
+            </select>
+          </div>
+          <div class="field"><label>Nº de times</label><input type="number" id="team-count" min="2" max="20" value="4"></div>
+        </div>
+        <div id="sort-info" style="display:none"></div>
+        <div class="row" style="margin-top:16px">
+          <button class="btn btn-volt" onclick="drawTeams(false)">Sortear times</button>
+          <button class="btn" id="btn-redraw" onclick="drawTeams(true)" style="display:none">Ressortear</button>
+          <button class="btn btn-sm" onclick="openManualAdjust()">Ajuste manual</button>
+        </div>
+        <div id="teams-alert"></div>
+        <div id="outfield-players" style="display:none" class="outfield-list"></div>
+      </div>
+    </div>
+
+    <!-- SELETOR DE MODOS DE RODÍZIO -->
+    <div id="mode-selector-container" style="display:none; margin-top: 12px;">
+      <div class="mode-selector">
+        <div style="font-weight:600; margin-bottom:10px;">🎮 Modo de Rodízio</div>
+        <div class="mode-options" id="mode-options">
+          <div class="mode-option" data-mode="dynamic" onclick="selectMode('dynamic')">
+            <span class="mode-badge">🟢</span> Fila Dinâmica (Trava 2)
+          </div>
+          <div class="mode-option" data-mode="cup" onclick="selectMode('cup')">
+            <span class="mode-badge">🔵</span> Copa Relâmpago
+          </div>
+          <div class="mode-option" data-mode="roundrobin" onclick="selectMode('roundrobin')">
+            <span class="mode-badge">🟡</span> Rodízio Fixo (Round Robin)
+          </div>
+        </div>
+        <div id="mode-preview" class="mode-preview">
+          <!-- Aqui será mostrada apenas a descrição do modo, sem o título "Pré-visualização" -->
+        </div>
+        <!-- Botão para reordenar times (ordem inicial) -->
+        <button class="btn btn-sm" id="btn-reorder-teams" onclick="openTeamOrderModal()" style="margin-top:12px; width:100%;">🔁 Reordenar times</button>
+      </div>
+    </div>
+
+    <div id="teams-container"></div>
+    <div id="teams-actions" style="display:none; margin-top:8px" class="row">
+      <button class="btn btn-green" onclick="exportCSV('times')">Exportar times</button>
+      <button class="btn btn-primary" id="start-rodizio-btn" onclick="initRoundRobin()">▶ Iniciar rodízio</button>
+      <button class="btn btn-volt" onclick="initTournamentFromTeams()">🏆 Iniciar torneio</button>
+    </div>
+  </div>
+
+  <!-- PLACAR -->
+  <div id="panel-placar" class="panel">
+    <div id="placar-idle" class="empty-state">
+      <span class="empty-state-icon">🏐</span>
+      Nenhuma partida em andamento.
+    </div>
+    <div id="placar-active" style="display:none">
+      <!-- Exibição do modo atual -->
+      <div id="placar-mode-indicator" style="background: var(--surface-1); border-radius: var(--radius-sm); padding: 6px 12px; margin-bottom: 16px; text-align: center; font-size: 12px; font-weight: 500;">
+        Modo: <span id="placar-mode-name">—</span>
+      </div>
+      <div class="scoreboard">
+        <div class="score-match-label" id="match-label">Partida 1</div>
+        <div class="score-teams">
+          <div>
+            <div class="score-team-name" id="teamA-name">Time A</div>
+            <div class="score-pts" id="scoreA">0</div>
+            <div class="score-buttons">
+              <button class="score-btn score-minus" onclick="adjustScore('A',-1)">−</button>
+              <button class="score-btn score-plus" onclick="adjustScore('A',1)">+</button>
+            </div>
+          </div>
+          <div class="score-vs">×</div>
+          <div>
+            <div class="score-team-name" id="teamB-name">Time B</div>
+            <div class="score-pts" id="scoreB">0</div>
+            <div class="score-buttons">
+              <button class="score-btn score-minus" onclick="adjustScore('B',-1)">−</button>
+              <button class="score-btn score-plus" onclick="adjustScore('B',1)">+</button>
+            </div>
+          </div>
+        </div>
+        <div id="score-status" style="margin-top:18px; font-size:12px; opacity:0.65; letter-spacing:0.5px;"></div>
+      </div>
+      <div class="row" style="justify-content:center; gap: 12px;">
+        <button class="btn btn-primary" onclick="forceFinishMatch()">Encerrar partida</button>
+        <button class="btn btn-volt" id="btn-next-match-placar" onclick="nextMatchFromPlacar()">⏩ Próxima partida</button>
+        <button class="btn btn-sm" onclick="resetCurrentMatchConfirm()">Resetar</button>
+        <button class="btn btn-red" onclick="endSession()">Encerrar noite</button>
+      </div>
+      <div id="match-history" style="margin-top:20px; max-height:400px; overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- RODÍZIO -->
+  <div id="panel-rodizio" class="panel">
+    <div id="rodizio-idle" class="empty-state">
+      <span class="empty-state-icon">🔄</span>
+      Rodízio não iniciado. Sorteie os times e clique em "Iniciar rodízio".
+    </div>
+    <div id="rodizio-active" style="display:none">
+      <div class="card collapsible" id="card-current">
+        <div class="card-header">
+          <span class="card-title">📅 Partida atual</span>
+          <button class="collapse-btn" onclick="toggleCollapse('card-current')">▲</button>
+        </div>
+        <div class="card-body">
+          <div id="current-match-info"></div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn btn-volt" onclick="nextMatch()">Próxima partida</button>
+            <button class="btn btn-red" onclick="endSession()">Encerrar noite</button>
+          </div>
+        </div>
+      </div>
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="showRodizioSubTab('agenda')">Agenda de Rodadas</button>
+        <button class="sub-tab" onclick="showRodizioSubTab('classificacao')">Classificação</button>
+      </div>
+      <div id="rodizio-agenda" style="display:block">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">📋 Agenda</span>
+            <button class="btn btn-sm" id="btn-full-schedule" onclick="toggleFullSchedule()">Ver todas</button>
+          </div>
+          <div class="card-body">
+            <div class="filter-bar">
+              <span class="filter-chip active" onclick="setFilter('all')">Todas</span>
+              <span class="filter-chip" onclick="setFilter('pendentes')">Pendentes</span>
+              <span class="filter-chip" onclick="setFilter('live')">Ao vivo</span>
+              <span class="filter-chip" onclick="setFilter('done')">Encerradas</span>
+              <select id="filter-team" onchange="setFilterTeam()" style="width:auto;padding:5px 30px 5px 10px;font-size:12px;border-radius:20px;">
+                <option value="">Todos os times</option>
+              </select>
+            </div>
+            <div id="schedule-list" style="max-height:400px; overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+      <div id="rodizio-classificacao" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🏆 Classificação</span></div>
+          <div class="card-body">
+            <div class="scroll-x">
+              <table class="standings-table" id="standings-table"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTATÍSTICAS -->
+  <div id="panel-estatisticas" class="panel">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📊 Estatísticas</span>
+      </div>
+      <div class="card-body">
+        <div class="stats-selector">
+          <button class="stats-btn active" onclick="setStatsView('team')">Por Time</button>
+          <button class="stats-btn" onclick="setStatsView('player')">Por Jogador</button>
+        </div>
+        <div id="stats-team-view"><div class="team-stats-list" id="team-stats-container"></div></div>
+        <div id="stats-player-view" style="display:none">
+          <div class="scroll-x"><table class="player-stats-table" id="stats-player-table"></table></div>
+        </div>
+        <div style="margin-top:28px">
+          <div class="card-header" style="margin-bottom:12px"><span class="card-title">📜 Histórico de ações</span></div>
+          <div class="scroll-x"><table class="history-table" id="history-table"></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TORNEIO -->
+  <div id="panel-torneio" class="panel">
+    <div id="torneio-container" class="empty-state">
+      <span class="empty-state-icon">🏆</span>
+      Nenhum torneio iniciado.
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn btn-green" onclick="exportTorneioCSV()">Exportar torneio</button>
+    </div>
+  </div>
+
+  <!-- IMPORTAR -->
+  <div id="panel-importar" class="panel">
+    <div class="card">
+      <div class="card-header"><span class="card-title">📂 Importar planilha</span></div>
+      <p style="margin-bottom:16px; color:var(--text-secondary); font-size:14px;">Baixe o modelo, preencha e importe. Colunas: Nome, Nível, Sexo (M/F), Presença (S/N).</p>
+      <a href="#" id="download-modelo" class="btn btn-green" style="margin-bottom:20px">📥 Baixar modelo .xlsx</a>
+      <div class="dropzone" onclick="document.getElementById('file-input').click()" ondragover="dragOverHandler(event)" ondragleave="dragLeaveHandler(event)" ondrop="dropHandler(event)">
+        <span class="dropzone-icon">📂</span>
+        <div class="dropzone-text">Arraste ou clique para selecionar</div>
+        <div class="dropzone-sub">Aceita arquivos .xlsx ou .csv</div>
+      </div>
+      <input type="file" id="file-input" style="display:none" accept=".xlsx,.csv" onchange="handleFile(this.files[0])">
+      <div id="import-preview"></div>
+      <div id="import-actions" style="display:none; margin-top:16px; gap:8px; display:none">
+        <button class="btn btn-primary" onclick="confirmImport()">Confirmar</button>
+        <button class="btn" onclick="cancelImport()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAIS -->
+<div class="overlay" id="modal-cfg" style="display:none" onclick="closeOut(event,'modal-cfg')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⚙️ Configurações</span>
+      <button class="btn btn-sm" onclick="closeModal('modal-cfg')">✕</button>
+    </div>
+    <div class="field"><label>Pontuação máxima</label><input type="number" id="cfg-max" min="10" max="50" value="15"></div>
+    <div class="field"><label>Vantagem mínima</label><input type="number" id="cfg-adv" min="1" max="5" value="2"></div>
+    <div class="field"><label>Responsável</label><input id="cfg-admin" value="Admin"></div>
+    <div class="field"><label>Total de partidas no rodízio</label><input type="number" id="cfg-total-matches" min="1" max="200" value="12"></div>
+    <button class="btn btn-primary" onclick="saveConfig()" style="width:100%; justify-content:center;">Salvar configurações</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-test" style="display:none" onclick="closeOut(event,'modal-test')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🧪 Gerar jogadores de teste</span>
+      <button class="btn btn-sm" onclick="closeModal('modal-test')">✕</button>
+    </div>
+    <div class="field"><label>Quantidade de jogadores</label><input type="number" id="test-count" min="2" max="40" value="12"></div>
+    <div class="field"><label>Distribuição de gênero</label>
+      <select id="test-gender-dist">
+        <option value="balanced">Equilibrada</option>
+        <option value="random">Aleatória</option>
+        <option value="more_m">Mais masculino</option>
+        <option value="more_f">Mais feminino</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="generateTestData()" style="width:100%; justify-content:center;">Gerar jogadores</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-move" style="display:none" onclick="closeOut(event,'modal-move')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">↔ Mover jogador</span>
+      <button class="btn btn-sm" onclick="closeModal('modal-move')">✕</button>
+    </div>
+    <div class="field"><label>Jogador</label><select id="move-player"></select></div>
+    <div class="field"><label>Destino</label><select id="move-team"></select></div>
+    <button class="btn btn-primary" onclick="executeMove()">Mover</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-edit-match" style="display:none" onclick="closeOut(event,'modal-edit-match')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Editar partida</span>
+      <button class="btn btn-sm" onclick="closeModal('modal-edit-match')">✕</button>
+    </div>
+    <div id="edit-match-info"></div>
+    <div class="row" style="margin-top:12px">
+      <div class="field"><label>Placar Time A</label><input type="number" id="edit-sa" min="0"></div>
+      <div class="field"><label>Placar Time B</label><input type="number" id="edit-sb" min="0"></div>
+    </div>
+    <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:24px">
+      <button class="btn btn-red" id="edit-no-btn" style="padding:10px 24px; font-weight:700">NÃO</button>
+      <button class="btn btn-primary" id="edit-yes-btn">SIM</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-order-teams" style="display:none" onclick="closeOut(event,'modal-order-teams')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔁 Ordem dos times</span>
+      <button class="btn btn-sm" onclick="closeModal('modal-order-teams')">✕</button>
+    </div>
+    <p style="margin-bottom:12px;">Defina a ordem de entrada dos times no rodízio (importante para o modo Fila Dinâmica e para a sequência inicial).</p>
+    <div id="order-teams-list" style="margin-bottom:20px;"></div>
+    <button class="btn btn-primary" onclick="applyTeamOrder()">Aplicar ordem</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-group-order" style="display:none" onclick="closeOut(event,'modal-group-order')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">📋 Reordenar grupos (Copa)</span>
+      <button class="btn btn-sm" onclick="closeModal('modal-group-order')">✕</button>
+    </div>
+    <div id="group-order-container"></div>
+    <button class="btn btn-primary" onclick="applyGroupOrder()" style="margin-top:16px;">Aplicar nova ordem</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal-confirm" style="display:none">
+  <div class="modal" style="max-width:380px; text-align:center">
+    <div style="font-size:36px; margin-bottom:12px;">⚠️</div>
+    <div class="modal-title" style="justify-content:center; margin-bottom:10px">Tem certeza?</div>
+    <p id="confirm-msg" style="margin-bottom:24px; color:var(--text-secondary); font-size:14px;"></p>
+    <div style="display:flex; gap:12px; justify-content:center">
+      <button class="btn btn-red" id="confirm-no-btn" style="padding:10px 28px; font-weight:700">NÃO</button>
+      <button class="btn btn-primary" id="confirm-yes-btn" style="padding:10px 28px;">SIM</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

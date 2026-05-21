@@ -130,6 +130,7 @@
       </div>
     </div>
 
+
     <!-- SELETOR DE MODOS DE RODÍZIO -->
     <div id="mode-selector-container" style="display:none; margin-top: 12px;">
       <div class="mode-selector">
@@ -151,6 +152,18 @@
         <!-- Botão para reordenar times (ordem inicial) -->
         <button class="btn btn-sm" id="btn-reorder-teams" onclick="openTeamOrderModal()" style="margin-top:12px; width:100%;">🔁 Reordenar times</button>
       </div>
+    </div>
+
+          <!-- BARRA DE VISIBILIDADE --->
+
+    <div class="vis-bar" id="vis-bar">
+      <span class="vis-chip active" onclick="toggleVis('stars')">⭐ Estrelas</span>
+      <span class="vis-chip active" onclick="toggleVis('avg')">📊 Média</span>
+      <span class="vis-chip active" onclick="toggleVis('anchor')">⚓ Âncora</span>
+      <span style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn btn-sm" onclick="visAll(true)">Mostrar tudo</button>
+        <button class="btn btn-sm" onclick="visAll(false)">Ocultar tudo</button>
+      </span>
     </div>
 
     <div id="teams-container"></div>
@@ -390,7 +403,6 @@
     </div>
     <p style="margin-bottom:12px;">Defina a ordem de entrada dos times no rodízio (importante para o modo Fila Dinâmica e para a sequência inicial).</p>
     <div id="order-teams-list" style="margin-bottom:20px;"></div>
-    <button class="btn btn-primary" onclick="applyTeamOrder()">Aplicar ordem</button>
   </div>
 </div>
 

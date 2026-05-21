@@ -3,6 +3,13 @@
 Sistema de gerenciamento completo para peladas de vôlei: cadastro de jogadores, controle de presença, sorteio de times balanceados, três modos de rodízio, placar ao vivo e estatísticas detalhadas.  
 Criado para transformar a organização do grupo em diversão e maturidade tática.
 
+## 🌐 Acesse o sistema online
+
+Clique aqui para usar o Vôlei Manager agora mesmo:  
+👉 **[https://ristersilva.github.io/volei-manager/](https://ristersilva.github.io/volei-manager/)** 👈
+
+> Nenhuma instalação necessária. Funciona no navegador e salva os dados localmente.
+
 ## ✨ Por que ele existe?
 
 Após uma reformulação no número de jogadores e equipes do nosso grupo de vôlei, enfrentamos desafios clássicos:

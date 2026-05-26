@@ -794,3 +794,9 @@ select {
   user-select: none;
 }
 .order-drag:active { cursor: grabbing; }
+
+/* placeholder para manter o espaço quando estrelas estão ocultas */
+.stars-placeholder {
+  width: 68px;
+  display: inline-block;
+}

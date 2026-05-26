@@ -19,6 +19,9 @@ let winStreak = [];           // vitórias consecutivas por time
 // Ordem personalizada dos times (inicial)
 let customTeamOrder = [];     // array de índices
 
+// Controle de visibilidade das estrelas (nível) nas listas e estatísticas
+let showStars = false;        // padrão = escondido
+
 // Para persistência
 const STORAGE_KEY = 'volei_manager_state';
 
@@ -63,7 +66,7 @@ function renderPlayers(){
       <span class="player-num">${idx+1}</span>
       ${genderBadge(p.gender)}
       <span class="player-name">${esc(name)}</span>
-      ${starsHtml(p.level)}
+      ${showStars ? starsHtml(p.level) : '<span class="stars-placeholder" style="width:68px; display:inline-block;"></span>'}
       ${p.present?'<span class="badge b-ok">presente</span>':'<span class="badge b-off">ausente</span>'}
       <button class="btn btn-sm btn-icon" onclick="editPlayer('${escapeJs(name)}')" title="Editar">✏️</button>
       <button class="btn btn-sm btn-icon btn-red" onclick="removePlayer('${escapeJs(name)}')" title="Remover">🗑️</button>
@@ -85,7 +88,7 @@ function renderPresence(){
     `<div class="player-item ${p.present?'':'inactive'}">
       ${genderBadge(p.gender)}
       <span class="player-name">${esc(name)}</span>
-      ${starsHtml(p.level)}
+      ${showStars ? starsHtml(p.level) : '<span class="stars-placeholder" style="width:68px; display:inline-block;"></span>'}
       <label class="toggle"><input type="checkbox" ${p.present?'checked':''} onchange="togglePresence('${escapeJs(name)}',this.checked)"><span class="slider"></span></label>
     </div>`
   ).join('');
@@ -244,7 +247,8 @@ function saveStateToLocalStorage() {
   const state = {
     players, teams, drawQueue, lastSig, cfg, schedule, currentMatchIdx, matchHistory, auditLog,
     teamStats, teamOrder, fullScheduleView, vis, _playerStats, statsView, presenceFilter,
-    rodizioSubTab, teamState, currentRodizioMode, modeLocked, dynamicQueue, winStreak, customTeamOrder
+    rodizioSubTab, teamState, currentRodizioMode, modeLocked, dynamicQueue, winStreak, customTeamOrder,
+    showStars
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -279,6 +283,7 @@ function loadStateFromLocalStorage() {
     dynamicQueue = state.dynamicQueue || [];
     winStreak = state.winStreak || [];
     customTeamOrder = state.customTeamOrder || teams.map((_,i)=>i);
+    showStars = state.showStars ?? false;
     renderPlayers();
     renderPresence();
     if (teams.length) renderTeams();
@@ -865,7 +870,7 @@ function renderStats(){
   const teamRows=teams.map((t,i)=>{ const w=teamStats[i]?.wins||0; const l=teamStats[i]?.losses||0; const p=w+l; const pct=p?Math.round(w/p*100):0; return{name:t.name,w,l,p,pct}; }).sort((a,b)=>b.w-a.w);
   $('team-stats-container').innerHTML=teamRows.map(r=>`<div class="team-stat-row"><span class="team-stat-name">${esc(r.name)}</span><div class="team-stat-numbers"><span>🏆 ${r.w}V</span><span>💔 ${r.l}D</span><span>📊 ${r.p}J</span><span>⭐ ${r.pct}%</span></div></div>`).join('');
   const playerRows=Object.entries(players).map(([n,p])=>{ const s=_playerStats[n]||{wins:0,losses:0,matches:0}; const pct=s.matches?Math.round(s.wins/s.matches*100):0; return{name:n,gender:p.gender,level:p.level,...s,pct}; }).sort((a,b)=>b.wins-a.wins);
-  $('stats-player-table').innerHTML=`<thead><tr><th>Jogador</th><th>Nível</th><th>J</th><th>V</th><th>D</th><th>%V</th></tr></thead><tbody>${playerRows.map(r=>`<tr><td style="font-weight:500">${genderBadge(r.gender)} ${esc(r.name)}</td><td>${starsHtml(r.level)}</td><td class="mono">${r.matches}</td><td class="mono">${r.wins}</td><td class="mono">${r.losses}</td><td class="mono">${r.pct}%</td></tr>`).join('')}</tbody>`;
+  $('stats-player-table').innerHTML=`<thead><tr><th>Jogador</th><th>Nível</th><th>J</th><th>V</th><th>D</th><th>%V</th></tr></thead><tbody>${playerRows.map(r=>`<tr><td style="font-weight:500">${genderBadge(r.gender)} ${esc(r.name)}</td><td>${showStars ? starsHtml(r.level) : '<span style="opacity:0.3">•••</span>'}</td><td class="mono">${r.matches}</td><td class="mono">${r.wins}</td><td class="mono">${r.losses}</td><td class="mono">${r.pct}%</td></tr>`).join('')}</tbody>`;
   $('history-table').innerHTML=`<thead><tr><th>Ação</th><th>Alvo</th><th>De</th><th>Para</th><th>Data</th><th>Por</th></tr></thead><tbody>${auditLog.slice().reverse().slice(0,30).map(h=>`<tr><td style="font-weight:500">${h.type}</td><td style="font-weight:500">${esc(h.subject)}</td><td>${h.from}</td><td>${h.to}</td><td style="font-size:12px;color:var(--text-tertiary)">${h.date}</td><td>${esc(h.by)}</td></tr>`).join('')}</tbody>`;
 }
 
@@ -1038,6 +1043,17 @@ function openGroupOrderModal() {
 }
 
 // ==============================================================
+// CONTROLE DE VISIBILIDADE DAS ESTRELAS (NÍVEL)
+// ==============================================================
+function toggleShowStars() {
+  showStars = !showStars;
+  renderPlayers();
+  renderPresence();
+  renderStats();
+  saveStateToLocalStorage();
+}
+
+// ==============================================================
 // NAVEGAÇÃO E INICIALIZAÇÃO
 // ==============================================================
 function switchTab(name){
@@ -1137,3 +1153,4 @@ window.selectMode = selectMode;
 window.nextMatchFromPlacar = nextMatchFromPlacar;
 window.openTeamOrderModal = openTeamOrderModal;
 window.openGroupOrderModal = openGroupOrderModal;
+window.toggleShowStars = toggleShowStars;

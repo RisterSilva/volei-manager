@@ -64,6 +64,7 @@
       <div class="card-header">
         <span class="card-title">📋 Elenco</span>
         <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-sm" id="toggleStarsElencoBtn" onclick="toggleShowStars()" title="Mostrar/Esconder níveis (estrelas)">⭐</button>
           <button class="collapse-btn" onclick="toggleCollapse('card-list')">▲</button>
           <button class="btn btn-red btn-sm" onclick="clearAllPlayers()">Limpar tudo</button>
         </div>
@@ -77,6 +78,7 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">✅ Controle de Presença</span>
+        <button class="btn btn-sm" onclick="toggleShowStars()" title="Mostrar/Esconder níveis (estrelas)">⭐</button>
       </div>
       <div class="card-body">
         <div class="row" style="margin-bottom:16px; justify-content:space-between; flex-wrap:wrap;">
@@ -280,6 +282,7 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">📊 Estatísticas</span>
+        <button class="btn btn-sm" onclick="toggleShowStars()" title="Mostrar/Esconder níveis (estrelas)">⭐</button>
       </div>
       <div class="card-body">
         <div class="stats-selector">
@@ -288,7 +291,7 @@
         </div>
         <div id="stats-team-view"><div class="team-stats-list" id="team-stats-container"></div></div>
         <div id="stats-player-view" style="display:none">
-          <div class="scroll-x"><table class="player-stats-table" id="stats-player-table"></table></div>
+          <div class="scroll-x"><table class="player-stats-table" id="stats-player-table"></td></div>
         </div>
         <div style="margin-top:28px">
           <div class="card-header" style="margin-bottom:12px"><span class="card-title">📜 Histórico de ações</span></div>

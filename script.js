@@ -124,30 +124,91 @@ function editPlayer(name){
 }
 
 function teamSignature(ts){ return ts.map(t=>t.players.map(p=>p.name).sort().join(',')).sort().join('|'); }
-function drawTeams(forceNew){
-  const pp=presentList(); const size=parseInt($('team-size').value); let count=parseInt($('team-count').value);
-  if(pp.length<size*count){ showAlert('teams-alert',`Apenas ${pp.length} presentes. Serão criados ${Math.floor(pp.length/size)} times.`,'amber'); count=Math.floor(pp.length/size); if(count<2) count=2; $('team-count').value=count; }
-  const queueNames=drawQueue.filter(n=>players[n]?.present); const others=pp.map(([n])=>n).filter(n=>!queueNames.includes(n));
-  let best=null;
-  for(let att=0;att<400;att++){
-    const shuffled=[...others].sort(()=>Math.random()-0.5); const pool=[...queueNames,...shuffled]; const selected=pool.slice(0,size*count); const leftOut=pool.slice(size*count);
-    const males=selected.filter(n=>players[n].gender==='M').sort(()=>Math.random()-0.5); const females=selected.filter(n=>players[n].gender==='F').sort(()=>Math.random()-0.5);
-    const ts=Array.from({length:count},(_,i)=>({name:`Time ${String.fromCharCode(65+i)}`,color:`hsl(${i*40%360},55%,45%)`,players:[]}));
-    const sums=Array(count).fill(0); const gc=Array(count).fill().map(()=>({M:0,F:0}));
-    function bestIdx(g){ let b=0,bs=Infinity; for(let i=0;i<count;i++){ const s=gc[i][g]*100+sums[i]; if(s<bs){bs=s;b=i;} } return b; }
-    function place(name){ const g=players[name].gender; const idx=bestIdx(g); ts[idx].players.push({name,level:players[name].level,gender:g,anchor:players[name].level>=4}); sums[idx]+=players[name].level; gc[idx][g]++; }
-    const mAnchors=males.filter(n=>players[n].level>=4).sort((a,b)=>players[b].level-players[a].level); const fAnchors=females.filter(n=>players[n].level>=4).sort((a,b)=>players[b].level-players[a].level);
-    const mRest=males.filter(n=>players[n].level<4); const fRest=females.filter(n=>players[n].level<4);
-    [...mAnchors,...fAnchors,...mRest,...fRest].forEach(place);
-    const avgs=ts.map((t,i)=>sums[i]/t.players.length); const diff=Math.max(...avgs)-Math.min(...avgs); const sig=teamSignature(ts);
-    if(diff<=1.0 && (!forceNew || sig!==lastSig)){ if(!best || diff<best.diff){ best={ts,diff,sig,leftOut}; if(diff<0.2) break; } }
+function drawTeams(forceNew) {
+  const present = presentList();
+  const total = present.length;
+  const size = parseInt($('team-size').value);
+  let count = parseInt($('team-count').value);
+  if (count < 2) count = 2;
+  if (count > total) {
+    showAlert('teams-alert', `Impossível: ${count} times com ${total} jogadores.`, 'red');
+    return;
   }
-  if(!best){ showAlert('teams-alert','Não foi possível gerar times equilibrados','amber'); return; }
-  teams=best.ts; drawQueue=best.leftOut; lastSig=best.sig;
-  // Reset custom order após sorteio
+  // Regra dupla
+  if (size === 2) {
+    if (total !== 2 * count) {
+      showAlert('teams-alert', `Duplas exigem exatamente ${2*count} jogadores (${total} disponíveis).`, 'red');
+      return;
+    }
+  }
+  // Calcular distribuição: primeiros times cheios, último com resto
+  let teamSizes = new Array(count).fill(size);
+  let remaining = total - (size * count);
+  if (remaining < 0) {
+    let lastSize = total - (size * (count - 1));
+    let half = Math.ceil(size / 2);
+    if (lastSize < half) {
+      showAlert('teams-alert', `Último time teria só ${lastSize} jogadores, mínimo ${half}.`, 'red');
+      return;
+    }
+    for (let i = 0; i < count - 1; i++) teamSizes[i] = size;
+    teamSizes[count - 1] = lastSize;
+  } else if (remaining > 0) {
+    showAlert('teams-alert', `Jogadores excedem capacidade total (${size*count}). Aumente times.`, 'red');
+    return;
+  }
+  // Lista de jogadores e ordenação
+  let allNames = present.map(([n]) => n);
+  allNames.sort(() => Math.random() - 0.5);
+  const anchorsM = allNames.filter(n => players[n].gender === 'M' && players[n].level >= 4).sort((a,b) => players[b].level - players[a].level);
+  const anchorsF = allNames.filter(n => players[n].gender === 'F' && players[n].level >= 4).sort((a,b) => players[b].level - players[a].level);
+  const nonM = allNames.filter(n => players[n].gender === 'M' && players[n].level < 4);
+  const nonF = allNames.filter(n => players[n].gender === 'F' && players[n].level < 4);
+  const order = [...anchorsM, ...anchorsF, ...nonM, ...nonF];
+  // Criar times
+  let newTeams = Array.from({ length: count }, (_, i) => ({
+    name: `Time ${String.fromCharCode(65 + i)}`,
+    color: `hsl(${i * 40 % 360}, 55%, 45%)`,
+    players: []
+  }));
+  // Função para escolher time (menos carregado)
+  function bestTeamIndex(gender) {
+    let best = -1, bestScore = Infinity;
+    for (let i = 0; i < count; i++) {
+      if (newTeams[i].players.length >= teamSizes[i]) continue;
+      let genderCount = newTeams[i].players.filter(p => p.gender === gender).length;
+      let totalLevel = newTeams[i].players.reduce((s,p) => s + p.level, 0);
+      let score = genderCount * 100 + totalLevel;
+      if (score < bestScore) { bestScore = score; best = i; }
+    }
+    return best;
+  }
+  // Alocar
+  for (let name of order) {
+    let gender = players[name].gender;
+    let idx = bestTeamIndex(gender);
+    if (idx === -1) { showAlert('teams-alert', 'Erro na alocação.', 'red'); return; }
+    newTeams[idx].players.push({ name, level: players[name].level, gender, anchor: players[name].level >= 4 });
+  }
+  // Verificar times incompletos e montar aviso
+  let incomplete = [];
+  for (let i = 0; i < count; i++) {
+    if (newTeams[i].players.length < size) incomplete.push(`${newTeams[i].name} (${newTeams[i].players.length}/${size})`);
+  }
+  if (incomplete.length) {
+    showAlert('teams-alert', `Times incompletos: ${incomplete.join(', ')}`, 'amber');
+  }
+  // Atualizar globais
+  teams = newTeams;
+  drawQueue = [];
+  lastSig = teamSignature(teams);
   customTeamOrder = teams.map((_,i)=>i);
-  if(drawQueue.length){ $('outfield-players').style.display='block'; $('outfield-players').innerHTML=`<strong>🚫 Jogadores de fora:</strong> ${drawQueue.map(n=>esc(n)).join(', ')}`; } else $('outfield-players').style.display='none';
-  renderTeams(); $('btn-redraw').style.display='inline-flex'; $('teams-actions').style.display='flex'; $('vis-bar').style.display='flex'; audit('sorteio','times',`${size}x${teams.length}`,best.diff.toFixed(2));
+  $('outfield-players').style.display = 'none';
+  renderTeams();
+  $('btn-redraw').style.display = 'inline-flex';
+  $('teams-actions').style.display = 'flex';
+  $('vis-bar').style.display = 'flex';
+  audit('sorteio', 'times', `${size}x${teams.length}`, `tamanhos: ${teamSizes.join(',')}`);
   saveStateToLocalStorage();
 }
 
